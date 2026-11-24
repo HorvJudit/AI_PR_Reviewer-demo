@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Obsidian Pairs</title>
+    <meta
+      name="description"
+      content="A sleek, dark-mode animated Memory Card Game built with zero-dependency HTML, CSS, and modular ES6 JavaScript."
+    />
+    <meta property="og:title" content="Obsidian Pairs" />
+    <meta
+      property="og:description"
+      content="A sleek, dark-mode animated Memory Card Game built with zero-dependency HTML, CSS, and modular ES6 JavaScript."
+    />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="top-bar">
+        <h1 class="brand-title">Obsidian Pairs</h1>
+
+        <dl class="hud-metrics" aria-label="Game statistics">
+          <div class="metric-item">
+            <dt class="metric-label">Moves</dt>
+            <dd id="moves-value" class="metric-value">0</dd>
+          </div>
+          <span class="metric-divider" aria-hidden="true">/</span>
+          <div class="metric-item">
+            <dt class="metric-label">Pairs</dt>
+            <dd id="pairs-value" class="metric-value">0 / 8</dd>
+          </div>
+          <span class="metric-divider" aria-hidden="true">/</span>
+          <div class="metric-item">
+            <dt class="metric-label">Time</dt>
+            <dd id="timer-value" class="metric-value">00:00</dd>
+          </div>
+          <span class="metric-divider" aria-hidden="true">/</span>
+          <div class="metric-item">
+            <dt class="metric-label">Best</dt>
+            <dd id="best-value" class="metric-value">—</dd>
+          </div>
+        </dl>
+
+        <div class="header-actions">
+          <button
+            id="sound-toggle-btn"
+            class="icon-button"
+            type="button"
+            aria-pressed="true"
+            aria-label="Mute sound effects"
+            title="Toggle sound effects"
+          >
+            <svg
+              class="button-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+              <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+            </svg>
+            <span class="button-label">Sound</span>
+          </button>
+
+          <button id="restart-btn" class="primary-button" type="button">
+            New Game
+          </button>
+        </div>
+      </header>
+
+      <main class="stage">
+        <section class="controls-bar" aria-label="Board controls">
+          <div
+            id="difficulty-controls"
+            class="segmented-control"
+            role="group"
+            aria-label="Board size"
+          >
+            <button
+              type="button"
+              class="segment-button"
+              data-difficulty="relaxed"
+              aria-pressed="false"
+            >
+              4 × 3 Relaxed
+            </button>
+            <button
+              type="button"
+              class="segment-button is-active"
+              data-difficulty="classic"
+              aria-pressed="true"
+            >
+              4 × 4 Classic
+            </button>
+            <button
+              type="button"
+              class="segment-button"
+              data-difficulty="master"
+              aria-pressed="false"
+            >
+              6 × 4 Master
+            </button>
+          </div>
+
+          <p id="status-message" class="status-message" aria-live="polite">
+            Flip any two cards to find matching pairs.
+          </p>
+        </section>
+
+        <section class="board-frame" aria-label="Memory card board">
+          <div id="game-board" class="game-board grid-classic" role="grid"></div>
+        </section>
+      </main>
+
+      <footer class="app-footer">
+        <span>Keyboard: Tab to navigate · Enter to flip · R to restart</span>
+      </footer>
+    </div>
+
+    <div
+      id="victory-modal"
+      class="modal-backdrop is-hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="victory-title"
+      aria-hidden="true"
+    >
+      <div class="modal-card">
+        <div class="modal-emblem" aria-hidden="true">
+          <svg
+            viewBox="0 0 48 48"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M16 10h16v10a8 8 0 0 1-16 0V10Z"></path>
+            <path d="M16 14H10a3 3 0 0 0 0 6h6"></path>
+            <path d="M32 14h6a3 3 0 0 1 0 6h-6"></path>
+            <path d="M24 28v8"></path>
+            <path d="M17 36h14"></path>
+            <path d="M14 40h20"></path>
+          </svg>
+        </div>
+
+        <h2 id="victory-title" class="modal-title">Board Cleared</h2>
+        <p id="victory-subtitle" class="modal-subtitle">
+          Every pair matched with precision.
+        </p>
+
+        <div id="victory-stars" class="star-row" aria-label="Star rating"></div>
+
+        <dl class="victory-stats">
+          <div class="victory-stat">
+            <dt class="victory-stat-label">Moves</dt>
+            <dd id="summary-moves" class="victory-stat-value">0</dd>
+          </div>
+          <div class="victory-stat">
+            <dt class="victory-stat-label">Time</dt>
+            <dd id="summary-time" class="victory-stat-value">00:00</dd>
+          </div>
+          <div class="victory-stat">
+            <dt class="victory-stat-label">Accuracy</dt>
+            <dd id="summary-accuracy" class="victory-stat-value">0%</dd>
+          </div>
+        </dl>
+
+        <p id="summary-record" class="record-note is-hidden"></p>
+
+        <div class="modal-actions">
+          <button id="play-again-btn" class="primary-button" type="button">
+            Play Again
+          </button>
+          <button
+            id="next-difficulty-btn"
+            class="secondary-button"
+            type="button"
+          >
+            Next Grid Size
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="./js/main.js"></script>
+  </body>
+</html>
