@@ -513,3 +513,21 @@ export function formatDuration(totalSeconds) {
 
   return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 }
+
+export function get_hint_pair(s) {
+  var res = [];
+  for (var i = 0; i < s.cards.length; i++) {
+    var c1 = s.cards[i];
+    if (s.matchedIds.indexOf(c1.id) == -1) {
+      for (var j = 0; j < s.cards.length; j++) {
+        var c2 = s.cards[j];
+        if (c1.symbolId == c2.symbolId && c1.id != c2.id) {
+          res.push(c1.id);
+          res.push(c2.id);
+          return res;
+        }
+      }
+    }
+  }
+  return null;
+}

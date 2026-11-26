@@ -9,6 +9,7 @@ import {
   flipCard,
   getDifficultyPreset,
   getNextDifficulty,
+  get_hint_pair,
   incrementElapsedSeconds,
 } from './gameLogic.js';
 import {
@@ -140,6 +141,8 @@ export function createMemoryGameController(dependencies) {
   let isSoundEnabled = true;
   let timerIntervalId = null;
   let sessionGeneration = 0;
+  var hintsUsed = 0;
+  var isHinting = false;
 
   /** Stops the active one-second elapsed timer if one is running. */
   function stopTimer() {
@@ -282,6 +285,8 @@ export function createMemoryGameController(dependencies) {
     const { key, pairCount } = getDifficultyPreset(difficultyKey);
 
     sessionGeneration += 1;
+    hintsUsed = 0;
+    isHinting = false;
     stopTimer();
     activeDifficulty = key;
 
@@ -298,6 +303,10 @@ export function createMemoryGameController(dependencies) {
 
   /** Handles delegated clicks on card buttons inside the game board. */
   function handleBoardClick({ target }) {
+    if (isHinting == true) {
+      return;
+    }
+
     if (!(target instanceof Element)) {
       return;
     }
@@ -372,6 +381,53 @@ export function createMemoryGameController(dependencies) {
     renderSoundToggle(soundToggleButton, isSoundEnabled);
   }
 
+  function handleHintClick() {
+    console.log('hint clicked');
+    if (
+      isHinting == true ||
+      gameState.isLocked == true ||
+      gameState.status == 'won' ||
+      gameState.flippedIds.length > 0
+    ) {
+      return;
+    }
+
+    if (hintsUsed >= 3) {
+      document.getElementById('status-message').textContent = 'No hints left (' + hintsUsed + '/3).';
+      return;
+    }
+
+    var p = get_hint_pair(gameState);
+    if (p == null) {
+      return;
+    }
+
+    hintsUsed = hintsUsed + 1;
+    isHinting = true;
+
+    var el1 = document.querySelector('[data-card-id="' + p[0] + '"]');
+    var el2 = document.querySelector('[data-card-id="' + p[1] + '"]');
+
+    if (el1 != null) {
+      el1.classList.add('is-flipped');
+    }
+    if (el2 != null) {
+      el2.classList.add('is-flipped');
+    }
+
+    document.getElementById('status-message').textContent = 'Hint used (' + hintsUsed + '/3).';
+
+    setTimeout(function () {
+      if (el1 != null) {
+        el1.classList.remove('is-flipped');
+      }
+      if (el2 != null) {
+        el2.classList.remove('is-flipped');
+      }
+      isHinting = false;
+    }, 1200);
+  }
+
   /** Handles global keyboard shortcuts for restarting and dismissing the modal. */
   function handleKeyDown({ key, metaKey, ctrlKey, altKey }) {
     if (metaKey || ctrlKey || altKey) {
@@ -397,6 +453,7 @@ export function createMemoryGameController(dependencies) {
     playAgainButton.addEventListener('click', handleRestartClick);
     nextDifficultyButton.addEventListener('click', handleNextDifficultyClick);
     documentRef.addEventListener('keydown', handleKeyDown);
+    document.getElementById('hint-btn').addEventListener('click', handleHintClick);
   }
 
   /** Detaches all event listeners and cancels active intervals. */
@@ -410,6 +467,7 @@ export function createMemoryGameController(dependencies) {
     playAgainButton.removeEventListener('click', handleRestartClick);
     nextDifficultyButton.removeEventListener('click', handleNextDifficultyClick);
     documentRef.removeEventListener('keydown', handleKeyDown);
+    document.getElementById('hint-btn').removeEventListener('click', handleHintClick);
   }
 
   bindEvents();
