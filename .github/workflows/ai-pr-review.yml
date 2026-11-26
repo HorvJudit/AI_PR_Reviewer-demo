@@ -46,7 +46,7 @@ jobs:
           LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
           # Model-agnostic settings (default: Google Gemini OpenAI-compatible endpoint)
           LLM_API_URL: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
-          LLM_MODEL: "gemini-4-neon"
+          LLM_MODEL: "gemini-4-hydrogen"
           CONVENTIONS_DIR: "coding-conventions/conventions"
           SYSTEM_PROMPT_PATH: "coding-conventions/prompts/system_prompt.md"
           # Optional: GitHub username (without '@') to mention for approval or manual override
