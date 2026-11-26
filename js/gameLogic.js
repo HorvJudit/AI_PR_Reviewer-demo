@@ -1,5 +1,10 @@
 const SVG_VIEW_BOX = '0 0 48 48';
 
+export const THEMES = Object.freeze({
+  dark: 'dark',
+  light: 'light',
+});
+
 export const DIFFICULTY_ORDER = Object.freeze(['relaxed', 'classic', 'master']);
 
 export const DIFFICULTY_PRESETS = Object.freeze({
@@ -28,6 +33,7 @@ export const CARD_SYMBOLS = Object.freeze([
     id: 'compass',
     label: 'Compass',
     accentColor: '#f59e0b',
+    lightAccentColor: '#b45309',
     viewBox: SVG_VIEW_BOX,
     shapes: Object.freeze([
       Object.freeze({ tag: 'circle', attrs: Object.freeze({ cx: '24', cy: '24', r: '16' }) }),
@@ -39,6 +45,7 @@ export const CARD_SYMBOLS = Object.freeze([
     id: 'crescent',
     label: 'Crescent',
     accentColor: '#93c5fd',
+    lightAccentColor: '#1d4ed8',
     viewBox: SVG_VIEW_BOX,
     shapes: Object.freeze([
       Object.freeze({
@@ -55,6 +62,7 @@ export const CARD_SYMBOLS = Object.freeze([
     id: 'crystal',
     label: 'Crystal',
     accentColor: '#2dd4bf',
+    lightAccentColor: '#0f766e',
     viewBox: SVG_VIEW_BOX,
     shapes: Object.freeze([
       Object.freeze({ tag: 'polygon', attrs: Object.freeze({ points: '24,7 36,18 24,41 12,18' }) }),
@@ -66,6 +74,7 @@ export const CARD_SYMBOLS = Object.freeze([
     id: 'ember',
     label: 'Ember',
     accentColor: '#fb923c',
+    lightAccentColor: '#c2410c',
     viewBox: SVG_VIEW_BOX,
     shapes: Object.freeze([
       Object.freeze({
@@ -84,6 +93,7 @@ export const CARD_SYMBOLS = Object.freeze([
     id: 'fern',
     label: 'Botanical',
     accentColor: '#34d399',
+    lightAccentColor: '#047857',
     viewBox: SVG_VIEW_BOX,
     shapes: Object.freeze([
       Object.freeze({
@@ -100,6 +110,7 @@ export const CARD_SYMBOLS = Object.freeze([
     id: 'anchor',
     label: 'Anchor',
     accentColor: '#60a5fa',
+    lightAccentColor: '#2563eb',
     viewBox: SVG_VIEW_BOX,
     shapes: Object.freeze([
       Object.freeze({ tag: 'circle', attrs: Object.freeze({ cx: '24', cy: '12', r: '3.5' }) }),
@@ -115,6 +126,7 @@ export const CARD_SYMBOLS = Object.freeze([
     id: 'hourglass',
     label: 'Hourglass',
     accentColor: '#fbbf24',
+    lightAccentColor: '#a16207',
     viewBox: SVG_VIEW_BOX,
     shapes: Object.freeze([
       Object.freeze({ tag: 'line', attrs: Object.freeze({ x1: '14', y1: '10', x2: '34', y2: '10' }) }),
@@ -129,6 +141,7 @@ export const CARD_SYMBOLS = Object.freeze([
     id: 'quill',
     label: 'Quill',
     accentColor: '#a78bfa',
+    lightAccentColor: '#6d28d9',
     viewBox: SVG_VIEW_BOX,
     shapes: Object.freeze([
       Object.freeze({
@@ -145,6 +158,7 @@ export const CARD_SYMBOLS = Object.freeze([
     id: 'crown',
     label: 'Crown',
     accentColor: '#facc15',
+    lightAccentColor: '#b45309',
     viewBox: SVG_VIEW_BOX,
     shapes: Object.freeze([
       Object.freeze({
@@ -158,6 +172,7 @@ export const CARD_SYMBOLS = Object.freeze([
     id: 'bolt',
     label: 'Spark',
     accentColor: '#fde047',
+    lightAccentColor: '#ca8a04',
     viewBox: SVG_VIEW_BOX,
     shapes: Object.freeze([
       Object.freeze({
@@ -170,6 +185,7 @@ export const CARD_SYMBOLS = Object.freeze([
     id: 'prism',
     label: 'Prism',
     accentColor: '#38bdf8',
+    lightAccentColor: '#0369a1',
     viewBox: SVG_VIEW_BOX,
     shapes: Object.freeze([
       Object.freeze({ tag: 'polygon', attrs: Object.freeze({ points: '24,9 39,36 9,36' }) }),
@@ -180,6 +196,7 @@ export const CARD_SYMBOLS = Object.freeze([
     id: 'key',
     label: 'Cipher',
     accentColor: '#fb7185',
+    lightAccentColor: '#be123c',
     viewBox: SVG_VIEW_BOX,
     shapes: Object.freeze([
       Object.freeze({ tag: 'circle', attrs: Object.freeze({ cx: '17', cy: '24', r: '7' }) }),
@@ -213,12 +230,45 @@ function assertValidDeck(cards) {
 
 /** Creates a pair of card entities for a single symbol definition. */
 function createCardPair(symbol) {
-  const { id, label, accentColor, viewBox, shapes } = symbol;
+  const { id, label, accentColor, lightAccentColor, viewBox, shapes } = symbol;
 
   return [
-    Object.freeze({ id: `${id}-a`, symbolId: id, label, accentColor, viewBox, shapes }),
-    Object.freeze({ id: `${id}-b`, symbolId: id, label, accentColor, viewBox, shapes }),
+    Object.freeze({
+      id: `${id}-a`,
+      symbolId: id,
+      label,
+      accentColor,
+      lightAccentColor,
+      viewBox,
+      shapes,
+    }),
+    Object.freeze({
+      id: `${id}-b`,
+      symbolId: id,
+      label,
+      accentColor,
+      lightAccentColor,
+      viewBox,
+      shapes,
+    }),
   ];
+}
+
+/**
+ * Returns the opposite theme identifier for toggling between dark and light modes.
+ *
+ * @param {string} currentTheme - Current theme key ('dark' or 'light').
+ * @returns {string} The toggled theme key.
+ * @throws {RangeError} If currentTheme is not a supported theme identifier.
+ */
+export function resolveNextTheme(currentTheme) {
+  const { dark, light } = THEMES;
+
+  if (currentTheme !== dark && currentTheme !== light) {
+    throw new RangeError(`Unsupported theme: "${String(currentTheme)}".`);
+  }
+
+  return currentTheme === dark ? light : dark;
 }
 
 /** Produces a new shuffled copy using the Fisher-Yates algorithm without mutating input. */

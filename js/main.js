@@ -1,5 +1,6 @@
 import {
   CARD_SYMBOLS,
+  THEMES,
   calculateAccuracy,
   calculateStarRating,
   clearMismatchedSelection,
@@ -10,6 +11,7 @@ import {
   getDifficultyPreset,
   getNextDifficulty,
   incrementElapsedSeconds,
+  resolveNextTheme,
 } from './gameLogic.js';
 import {
   createSoundEngine,
@@ -19,6 +21,7 @@ import {
   renderDifficultyButtons,
   renderHud,
   renderSoundToggle,
+  renderTheme,
   renderVictoryModal,
   syncBoardCards,
 } from './ui.js';
@@ -29,6 +32,7 @@ const MISMATCH_REVEAL_MS = 720;
 const VICTORY_REVEAL_MS = 420;
 const TIMER_INTERVAL_MS = 1000;
 const BEST_SCORE_STORAGE_KEY = 'obsidian-pairs-best-moves';
+const THEME_STORAGE_KEY = 'obsidian-pairs-theme';
 
 /** Resolves after a fixed delay using an injected timeout scheduler. */
 function waitForDuration(durationMs, scheduleTimeout) {
@@ -83,6 +87,38 @@ function writeBestScores(storage, scores) {
   }
 }
 
+/** Reads and validates the user's persisted theme preference, defaulting to dark mode. */
+function readSavedTheme(storage) {
+  const { dark, light } = THEMES;
+
+  if (!storage || typeof storage.getItem !== 'function') {
+    return dark;
+  }
+
+  try {
+    const savedTheme = storage.getItem(THEME_STORAGE_KEY);
+    return savedTheme === light ? light : dark;
+  } catch (error) {
+    const { message } = error;
+    console.warn(`Could not read saved theme preference: ${message}`);
+    return dark;
+  }
+}
+
+/** Persists the selected theme preference without failing in restricted contexts. */
+function writeSavedTheme(storage, theme) {
+  if (!storage || typeof storage.setItem !== 'function') {
+    return;
+  }
+
+  try {
+    storage.setItem(THEME_STORAGE_KEY, theme);
+  } catch (error) {
+    const { message } = error;
+    console.warn(`Could not persist theme preference: ${message}`);
+  }
+}
+
 /** Builds a concise status message reflecting remaining pairs after a match. */
 function createMatchStatusText(matchedLabel, remainingPairs) {
   if (remainingPairs === 0) {
@@ -126,6 +162,7 @@ export function createMemoryGameController(dependencies) {
     difficultyControls,
     restartButton,
     soundToggleButton,
+    themeToggleButton,
     victoryModal,
     playAgainButton,
     nextDifficultyButton,
@@ -134,6 +171,7 @@ export function createMemoryGameController(dependencies) {
   const soundEngine = createSoundEngine(windowRef);
 
   let bestScores = readBestScores(storage);
+  let activeTheme = readSavedTheme(storage);
   let activeDifficulty = DEFAULT_DIFFICULTY;
   let gameState = null;
   let statusText = 'Flip any two cards to find matching pairs.';
@@ -372,6 +410,13 @@ export function createMemoryGameController(dependencies) {
     renderSoundToggle(soundToggleButton, isSoundEnabled);
   }
 
+  /** Switches between dark and light themes and persists the selection. */
+  function handleThemeToggleClick() {
+    activeTheme = resolveNextTheme(activeTheme);
+    writeSavedTheme(storage, activeTheme);
+    renderTheme(documentRef, themeToggleButton, activeTheme);
+  }
+
   /** Handles global keyboard shortcuts for restarting and dismissing the modal. */
   function handleKeyDown({ key, metaKey, ctrlKey, altKey }) {
     if (metaKey || ctrlKey || altKey) {
@@ -394,6 +439,7 @@ export function createMemoryGameController(dependencies) {
     difficultyControls.addEventListener('click', handleDifficultyClick);
     restartButton.addEventListener('click', handleRestartClick);
     soundToggleButton.addEventListener('click', handleSoundToggleClick);
+    themeToggleButton.addEventListener('click', handleThemeToggleClick);
     playAgainButton.addEventListener('click', handleRestartClick);
     nextDifficultyButton.addEventListener('click', handleNextDifficultyClick);
     documentRef.addEventListener('keydown', handleKeyDown);
@@ -407,12 +453,14 @@ export function createMemoryGameController(dependencies) {
     difficultyControls.removeEventListener('click', handleDifficultyClick);
     restartButton.removeEventListener('click', handleRestartClick);
     soundToggleButton.removeEventListener('click', handleSoundToggleClick);
+    themeToggleButton.removeEventListener('click', handleThemeToggleClick);
     playAgainButton.removeEventListener('click', handleRestartClick);
     nextDifficultyButton.removeEventListener('click', handleNextDifficultyClick);
     documentRef.removeEventListener('keydown', handleKeyDown);
   }
 
   bindEvents();
+  renderTheme(documentRef, themeToggleButton, activeTheme);
   renderSoundToggle(soundToggleButton, isSoundEnabled);
   startNewGame(DEFAULT_DIFFICULTY);
 

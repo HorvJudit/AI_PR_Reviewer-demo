@@ -14,6 +14,7 @@ const REQUIRED_ELEMENT_IDS = Object.freeze({
   difficultyControls: 'difficulty-controls',
   restartButton: 'restart-btn',
   soundToggleButton: 'sound-toggle-btn',
+  themeToggleButton: 'theme-toggle-btn',
   victoryModal: 'victory-modal',
   victorySubtitle: 'victory-subtitle',
   victoryStars: 'victory-stars',
@@ -113,13 +114,14 @@ function createSymbolArtwork(documentRef, { viewBox, shapes }) {
 
 /** Creates a single interactive 3D memory card button element. */
 function createCardElement(documentRef, card, index) {
-  const { id, label, accentColor } = card;
+  const { id, label, accentColor, lightAccentColor } = card;
   const button = documentRef.createElement('button');
   button.type = 'button';
   button.className = 'memory-card';
   button.dataset.cardId = id;
   button.style.setProperty('--deal-delay', `${index * CARD_DEAL_STAGGER_MS}ms`);
-  button.style.setProperty('--card-accent', accentColor);
+  button.style.setProperty('--card-accent-dark', accentColor);
+  button.style.setProperty('--card-accent-light', lightAccentColor ?? accentColor);
   button.setAttribute('aria-pressed', 'false');
   button.setAttribute('aria-label', `Hidden card ${index + 1}`);
 
@@ -341,6 +343,26 @@ export function renderSoundToggle(soundToggleButton, isSoundEnabled) {
   soundToggleButton.setAttribute(
     'aria-label',
     isSoundEnabled ? 'Mute sound effects' : 'Enable sound effects'
+  );
+}
+
+/**
+ * Applies the active color theme to the document root and synchronizes the switch state.
+ *
+ * @param {Document} documentRef - Injected DOM document reference.
+ * @param {HTMLElement} themeToggleButton - Theme toggle switch button element.
+ * @param {string} theme - Active theme identifier ('dark' or 'light').
+ * @returns {void}
+ */
+export function renderTheme(documentRef, themeToggleButton, theme) {
+  const { documentElement } = documentRef;
+  const isLightTheme = theme === 'light';
+
+  documentElement.dataset.theme = theme;
+  themeToggleButton.setAttribute('aria-checked', String(isLightTheme));
+  themeToggleButton.setAttribute(
+    'aria-label',
+    isLightTheme ? 'Switch to dark theme' : 'Switch to light theme'
   );
 }
 
