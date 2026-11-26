@@ -1,0 +1,65 @@
+name: AI Code Convention Review
+
+# Trigger the workflow when a Pull Request is opened, updated with new commits, or reopened
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+# Least-privilege permissions: read repo metadata and post comments on Pull Requests
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  ai-convention-review:
+    name: Run LLM Convention Reviewer
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout the central repository containing the conventions, prompts, and Python scripts
+      - name: Checkout central conventions and reviewer script
+        uses: actions/checkout@v4
+        with:
+          repository: HorvJudit/Coding_Conventions
+          path: coding-conventions
+          # Uncomment the line below ONLY if the central repository is private:
+          # token: ${{ secrets.CONVENTIONS_REPO_TOKEN }}
+
+      # 2. Set up the Python runtime environment
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: "coding-conventions/requirements.txt"
+
+      # 3. Install required Python packages (e.g., requests)
+      - name: Install dependencies
+        run: pip install -r coding-conventions/requirements.txt
+
+      # 4. Execute the modular Python reviewer script
+      - name: Run AI PR Reviewer
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          # Model-agnostic settings (default: Google Gemini OpenAI-compatible endpoint)
+          LLM_API_URL: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
+          LLM_MODEL: "gemini-2.5-flash"
+          CONVENTIONS_DIR: "coding-conventions/conventions"
+          SYSTEM_PROMPT_PATH: "coding-conventions/prompts/system_prompt.md"
+          # Optional: GitHub username (without '@') to mention for approval or manual override
+          HUMAN_REVIEWER: "HorvJudit"
+          LOG_PATH: "ai_review_log.json"
+        run: PYTHONPATH=coding-conventions python -m src.main
+
+      # 5. Archive the structured JSON audit log as a downloadable workflow artifact
+      - name: Upload AI review audit log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-review-log-pr-${{ github.event.pull_request.number }}
+          path: ai_review_log.json
+          if-no-files-found: warn
+          retention-days: 30
