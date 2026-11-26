@@ -45,8 +45,11 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
           # Model-agnostic settings (default: Google Gemini OpenAI-compatible endpoint)
-          LLM_API_URL: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
-          LLM_MODEL: "gemini-3.8-flash"
+          # LLM_API_URL: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
+          # LLM_MODEL: "gemini-3.8-flash"
+          # LLM_MODEL: "gemini-4-hydrogen"
+          LLM_API_URL: "https://api.groq.com/openai/v1/chat/completions"
+          LLM_MODEL: "llama-3.3-70b-versatile"
           CONVENTIONS_DIR: "coding-conventions/conventions"
           SYSTEM_PROMPT_PATH: "coding-conventions/prompts/system_prompt.md"
           # Optional: GitHub username (without '@') to mention for approval or manual override
